@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoBudget — учёт расходов на автомобиль</title>
+<style>
+:root{--bg:#0b0e18;--panel:#151a2b;--panel2:#1c2236;--text:#f4f6ff;--muted:#9aa4c0;--purple:#8057ff;--blue:#4d8dff;--green:#49d59a;--red:#ff647c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0%,#20204a 0,transparent 30%),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{padding:22px max(18px,calc((100% - 1160px)/2));display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #242b42;position:sticky;top:0;background:#0b0e18ed;backdrop-filter:blur(14px);z-index:2}
+.brand{font-size:24px;font-weight:800;letter-spacing:-1px}.brand span{color:#9a7aff}.tag{color:var(--muted);font-size:12px}
+main{max-width:1160px;margin:28px auto;padding:0 18px}.hero{display:flex;gap:22px;align-items:center;background:linear-gradient(110deg,#171c30,#25204a);border:1px solid #343553;border-radius:22px;padding:25px;overflow:hidden}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.05;margin:0 0 12px}.hero p{color:#bdc5dc;max-width:520px}.hero-art{font-size:92px;filter:drop-shadow(0 10px 20px #0008);min-width:150px;text-align:center}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:11px;padding:11px 15px;background:var(--purple);color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#272e46;color:#e6eaff}.btn.danger{background:#482331;color:#ff9aaa}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.stat,.card{background:var(--panel);border:1px solid #252d46;border-radius:17px;padding:18px}.stat small,.muted{color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:5px}.stat .ico{font-size:22px;float:right}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}.card h2{font-size:18px;margin:0 0 14px}.row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #252d46}.row:last-child{border:0}.pill{font-size:12px;padding:4px 8px;border-radius:20px;background:#252b43;color:#c7cfff}
+form{display:grid;gap:10px}label{font-size:12px;color:var(--muted)}input,select{width:100%;padding:11px;border:1px solid #303954;background:#0e1322;color:white;border-radius:10px;font:inherit}
+.field{display:grid;gap:5px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.car{display:flex;gap:12px;align-items:center;background:#1b2134;padding:13px;border-radius:13px}.car .emoji{font-size:32px}.car strong{display:block}
+.barline{display:flex;align-items:center;gap:9px;margin:11px 0}.barline span:first-child{width:100px;color:var(--muted);font-size:13px}.bar{height:9px;border-radius:9px;background:linear-gradient(90deg,var(--purple),var(--blue));min-width:3px}
+.empty{color:var(--muted);text-align:center;padding:18px}.note{font-size:12px;color:var(--muted);margin:18px 2px}
+footer{text-align:center;padding:25px;color:#727e9e;font-size:12px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.hero-art{font-size:64px;min-width:85px}}
+@media(max-width:480px){header{padding:15px}.hero{padding:18px}.hero-art{display:none}.grid{gap:9px}.stat{padding:13px}.stat strong{font-size:21px}.formgrid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><div><div class="brand">◒ Auto<span>Budget</span></div><div class="tag">Твой помощник в учёте расходов на авто</div></div><span class="pill">ДЕМО-ПРОЕКТ · 9 КЛАСС</span></header>
+<main>
+<section class="hero"><div><h1>Расходы на авто.<br><span style="color:#a58cff">Под контролем.</span></h1><p>Добавляй заправки и обслуживание, следи за пробегом и смотри, куда уходят деньги. Данные сохраняются в этом браузере.</p><div class="actions"><button class="btn" onclick="document.querySelector('#expenseForm').scrollIntoView({behavior:'smooth'})">＋ Добавить расход</button><button class="btn secondary" onclick="resetDemo()">Сбросить демо-данные</button></div></div><div class="hero-art">🚘</div></section>
+<section class="grid">
+ <div class="stat"><span class="ico">💳</span><small>Всего расходов</small><strong id="total">0 €</strong></div>
+ <div class="stat"><span class="ico">⛽</span><small>Топливо</small><strong id="fuel">0 €</strong></div>
+ <div class="stat"><span class="ico">🛠️</span><small>Обслуживание</small><strong id="service">0 €</strong></div>
+ <div class="stat"><span class="ico">🛣️</span><small>Последний пробег</small><strong id="mileage">— км</strong></div>
+</section>
+<section class="layout">
+ <div class="card"><h2>📊 Расходы по категориям</h2><div id="chart"></div><p class="muted" style="font-size:12px">График обновляется автоматически при добавлении расходов.</p></div>
+ <div class="card"><h2>🚗 Мой автомобиль</h2><div class="car"><div class="emoji">🚙</div><div><strong id="carName">Audi A6 Avant</strong><span class="muted" id="carInfo">Дизель · 2010 год</span></div></div><form id="carForm" style="margin-top:14px"><div class="field"><label>Марка и модель</label><input id="carInput" value="Audi A6 Avant" required></div><div class="formgrid"><div class="field"><label>Год выпуска</label><input id="yearInput" type="number" value="2010" min="1950" max="2035"></div><div class="field"><label>Тип топлива</label><select id="fuelInput"><option>Дизель</option><option>Бензин</option><option>Гибрид</option><option>Электро</option></select></div></div><button class="btn secondary">Сохранить авто</button></form></div>
+</section>
+<section class="layout" style="margin-top:14px">
+ <div class="card"><h2>＋ Добавить расход</h2><form id="expenseForm">
+ <div class="formgrid"><div class="field"><label>Категория</label><select id="category"><option>Топливо</option><option>Обслуживание</option><option>Страховка</option><option>Налоги</option><option>Мойка</option><option>Другое</option></select></div><div class="field"><label>Сумма (€)</label><input id="amount" type="number" min="0.01" step="0.01" placeholder="Например, 65" required></div></div>
+ <div class="formgrid"><div class="field"><label>Дата</label><input id="date" type="date" required></div><div class="field"><label>Пробег (км)</label><input id="km" type="number" min="0" placeholder="Например, 182500"></div></div>
+ <div class="field"><label>Комментарий</label><input id="comment" placeholder="Например, заправка на АЗС"></div><button class="btn">Сохранить расход</button></form></div>
+ <div class="card"><h2>🧾 История расходов</h2><div id="history"></div></div>
+</section>
+<p class="note">Важно: это учебный прототип. Он не подключается к банку, страховым компаниям или автомобилю. Не вводи реальные персональные или платёжные данные. Валюта и примеры условные.</p>
+</main><footer>AutoBudget · школьный проект · версия 1.0</footer>
+<script>
+const demo=[
+ {id:1,cat:"Топливо",amount:62.4,date:"2026-10-05",km:181200,comment:"Заправка"},
+ {id:2,cat:"Обслуживание",amount:89,date:"2026-10-12",km:181650,comment:"Замена масла (пример)"},
+ {id:3,cat:"Топливо",amount:54.2,date:"2026-10-20",km:182050,comment:"Заправка"},
+ {id:4,cat:"Мойка",amount:12,date:"2026-10-25",km:182300,comment:"Мойка"}
+];
+let expenses=JSON.parse(localStorage.getItem("ab_expenses")||"null")||demo;
+let car=JSON.parse(localStorage.getItem("ab_car")||"null")||{name:"Audi A6 Avant",year:2010,fuel:"Дизель"};
+const euro=n=>new Intl.NumberFormat("ru-RU",{style:"currency",currency:"EUR"}).format(n);
+function save(){localStorage.setItem("ab_expenses",JSON.stringify(expenses));localStorage.setItem("ab_car",JSON.stringify(car));}
+function render(){
+ const sum=expenses.reduce((s,e)=>s+Number(e.amount),0), by={};
+ expenses.forEach(e=>by[e.cat]=(by[e.cat]||0)+Number(e.amount));
+ document.getElementById("total").textContent=euro(sum);
+ document.getElementById("fuel").textContent=euro(by["Топливо"]||0);
+ document.getElementById("service").textContent=euro(by["Обслуживание"]||0);
+ const kms=expenses.map(e=>Number(e.km)||0).filter(Boolean);document.getElementById("mileage").textContent=(kms.length?Math.max(...kms).toLocaleString("ru-RU"):"—")+" км";
+ document.getElementById("carName").textContent=car.name;document.getElementById("carInfo").textContent=car.fuel+" · "+car.year+" год";
+ document.getElementById("carInput").value=car.name;document.getElementById("yearInput").value=car.year;document.getElementById("fuelInput").value=car.fuel;
+ const max=Math.max(1,...Object.values(by));document.getElementById("chart").innerHTML=Object.keys(by).length?Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="barline"><span>${k}</span><div class="bar" style="width:${Math.max(3,v/max*65)}%"></div><b>${euro(v)}</b></div>`).join(""):'<div class="empty">Пока нет расходов</div>';
+ document.getElementById("history").innerHTML=expenses.length?[...expenses].sort((a,b)=>b.date.localeCompare(a.date)).map(e=>`<div class="row"><div><b>${e.cat}</b><div class="muted" style="font-size:12px">${e.date} · ${e.comment||"Без комментария"}</div></div><div style="text-align:right"><b>${euro(Number(e.amount))}</b><br><button class="btn danger" style="padding:4px 8px;font-size:11px" onclick="removeExpense(${e.id})">Удалить</button></div></div>`).join(""):'<div class="empty">Добавь первый расход 👆</div>';
+}
+function removeExpense(id){expenses=expenses.filter(e=>e.id!==id);save();render()}
+function resetDemo(){if(confirm("Вернуть демонстрационные данные?")){expenses=demo.map(x=>({...x}));car={name:"Audi A6 Avant",year:2010,fuel:"Дизель"};save();render()}}
+document.getElementById("expenseForm").addEventListener("submit",e=>{e.preventDefault();const amount=Number(document.getElementById("amount").value);if(!(amount>0))return;expenses.push({id:Date.now(),cat:document.getElementById("category").value,amount,date:document.getElementById("date").value,km:document.getElementById("km").value,comment:document.getElementById("comment").value});save();e.target.reset();document.getElementById("date").value=new Date().toISOString().slice(0,10);render()});
+document.getElementById("carForm").addEventListener("submit",e=>{e.preventDefault();car={name:document.getElementById("carInput").value,year:document.getElementById("yearInput").value,fuel:document.getElementById("fuelInput").value};save();render()});
+document.getElementById("date").value=new Date().toISOString().slice(0,10);render();
+</script></body></html>
